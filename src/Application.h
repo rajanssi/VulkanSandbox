@@ -44,6 +44,10 @@ private:
   // std::unique_ptr<Model> model;
   std::unique_ptr<vkglTF::Model> model;
 
+  VkDescriptorPool modelDescriptorPool;
+  VkDescriptorSetLayout modelDescriptorSetLayout;
+
+
   void loadModel();
   void createGlobalUBO();
   void setupDescriptors();

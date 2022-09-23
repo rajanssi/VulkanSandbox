@@ -37,26 +37,89 @@ Application::Application() {
                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
 
-  nodePool = DescriptorPool::Builder(device).addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000).build();
 }
 
 Application::~Application() {}
 
-void Application::createGlobalUBO() {}
-
-void Application::setupDescriptors() {}
-
 void Application::setupNodeDescriptorSet(vkglTF::Node *node) {
   if (node->mesh) {
+    VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
+    descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptorSetAllocInfo.descriptorPool = modelDescriptorPool;
+    descriptorSetAllocInfo.pSetLayouts = &modelDescriptorSetLayout;
+    descriptorSetAllocInfo.descriptorSetCount = 1;
+    (vkAllocateDescriptorSets(device(), &descriptorSetAllocInfo, &node->mesh->uniformBuffer.descriptorSet));
+
+    VkWriteDescriptorSet writeDescriptorSet{};
+    writeDescriptorSet.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+    writeDescriptorSet.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    writeDescriptorSet.descriptorCount = 1;
+    writeDescriptorSet.dstSet = node->mesh->uniformBuffer.descriptorSet;
+    writeDescriptorSet.dstBinding = 0;
+    writeDescriptorSet.pBufferInfo = &node->mesh->uniformBuffer.descriptor;
+
+    vkUpdateDescriptorSets(device(), 1, &writeDescriptorSet, 0, nullptr);
   }
   for (auto &child : node->children) {
     setupNodeDescriptorSet(child);
   }
 }
 
+void Application::setupDescriptors() {
+  /*
+          Descriptor Pool
+  */
+  uint32_t imageSamplerCount = 0;
+  uint32_t materialCount = 0;
+  uint32_t meshCount = 0;
+
+  for (auto node : model->linearNodes) {
+    if (node->mesh) {
+      meshCount++;
+    }
+  }
+
+  std::cerr << meshCount << '\n';
+  std::cerr << renderer.getSwapChainImagecount() << '\n';
+
+  std::vector<VkDescriptorPoolSize> poolSizes = {
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + meshCount) * renderer.getSwapChainImagecount()}};
+  VkDescriptorPoolCreateInfo descriptorPoolCI{};
+  descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+  descriptorPoolCI.poolSizeCount = 1;
+  descriptorPoolCI.pPoolSizes = poolSizes.data();
+  descriptorPoolCI.maxSets = (4 +  meshCount) * renderer.getSwapChainImagecount();
+
+  vkCreateDescriptorPool(device(), &descriptorPoolCI, nullptr, &modelDescriptorPool);
+
+  /*
+          Descriptor sets
+  */
+
+  // Model node (matrices)
+  {
+    std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
+        {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT, nullptr},
+    };
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCI{};
+    descriptorSetLayoutCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
+    descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
+    vkCreateDescriptorSetLayout(device(), &descriptorSetLayoutCI, nullptr, &modelDescriptorSetLayout);
+
+    // Per-Node descriptor set
+    for (auto &node : model->nodes) {
+      setupNodeDescriptorSet(node);
+    }
+  }
+}
+
 void Application::run() {
   glfwSetCursorPosCallback(window.getWindow(), mouseCallback);
   glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+
+  setupDescriptors();
 
   std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
   for (size_t i = 0; i < uboBuffers.size(); i++) {
@@ -68,24 +131,15 @@ void Application::run() {
   auto globalSetLayout = DescriptorSetLayout::Builder(device)
                              .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
                              .build();
-  auto skinSetLayout = DescriptorSetLayout::Builder(device)
-                           .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-                           .build();
 
   std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
 
   RenderSystem renderSystem{device, renderer.swapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(),
-                                  skinSetLayout->getDescriptorSetLayout()};
+                            modelDescriptorSetLayout};
 
   for (size_t i = 0; i < globalDescriptorSets.size(); ++i) {
     auto bufferInfo = uboBuffers[i]->descriptorInfo();
     DescriptorWriter(*globalSetLayout, *globalPool).writeBuffer(0, &bufferInfo).build(globalDescriptorSets[i]);
-  }
-  for (auto &node : model->nodes) {
-    if (node->mesh) {
-      auto bufferInfo = node->mesh->uniformBuffer.descriptor;
-      DescriptorWriter(*skinSetLayout, *nodePool).writeBuffer(0, &bufferInfo).build(node->mesh->uniformBuffer.descriptorSet);
-    }
   }
 
   using namespace std::chrono;

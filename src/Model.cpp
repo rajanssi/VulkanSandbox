@@ -126,8 +126,6 @@ void Model::drawNode(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLay
         Texture texture = textures[materials[primitive.materialIndex].baseColorTextureIndex];
 
         // Bind the descriptor for the current primitive's texture
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 2, 1,
-                                &images[texture.imageIndex].descriptorSet, 0, nullptr);
         vkCmdDrawIndexed(commandBuffer, primitive.indexCount, 1, primitive.firstIndex, 0, 0);
       }
     }

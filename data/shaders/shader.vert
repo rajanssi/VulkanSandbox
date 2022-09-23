@@ -6,8 +6,7 @@ layout (location = 2) in vec3 inColor;
 layout (location = 3) in vec4 inJoint0;
 layout (location = 4) in vec4 inWeight0;
 
-layout (set = 0, binding = 0) uniform UBOScene
-{
+layout (set = 0, binding = 0) uniform UBOScene {
 	mat4 projection;
 	mat4 view;
 	vec4 lightPos;

@@ -11,10 +11,12 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
 
+/*
 struct PushConstantData {
   glm::mat4 modelMatrix{1.f};
   glm::mat4 normalMatrix{1.f};
 };
+*/
 
 RenderSystem::RenderSystem(Device &device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout,
                              VkDescriptorSetLayout imageSetLayout)
@@ -54,9 +56,9 @@ void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, V
 
 void RenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout imageSetLayout) {
   VkPushConstantRange pushConstantRange{};
-  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
   pushConstantRange.offset = 0;
-  pushConstantRange.size = sizeof(PushConstantData);
+  pushConstantRange.size = sizeof(glm::mat4);
 
   std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout, imageSetLayout};
 

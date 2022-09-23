@@ -625,20 +625,25 @@ void Model::loadFromFile(std::string filename, Device *device, VkQueue transferQ
 
 void Model::drawNode(Node *node, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
   if (node->mesh) {
-    glm::mat4 nodeMatrix = node->matrix;
-    std::vector<VkDescriptorSet> descriptorSets = {node->mesh->uniformBuffer.descriptorSet};
+    // Render mesh primitives
+    for (vkglTF::Primitive *primitive : node->mesh->primitives) {
+      const std::vector<VkDescriptorSet> descriptorsets = {
+          node->mesh->uniformBuffer.descriptorSet,
+      };
+      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1,
+                              static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
-    vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0,
-                       sizeof(glm::mat4), &nodeMatrix);
-
-    std::cout << "!" << '\n';
-    for (Primitive *primitive : node->mesh->primitives) {
-      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1, static_cast<uint32_t>(descriptorSets.size()), descriptorSets.data(), 0,
-                              nullptr);
-      vkCmdDrawIndexed(commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+      // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
+      vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
+                         sizeof(glm::mat4), &node->translation);
+      if (primitive->hasIndices) {
+        vkCmdDrawIndexed(commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
+      } else {
+        vkCmdDraw(commandBuffer, primitive->vertexCount, 1, 0, 0);
+      }
     }
-  }
-  for (auto &child : node->children) {
+  };
+  for (auto child : node->children) {
     drawNode(child, commandBuffer, pipelineLayout);
   }
 }

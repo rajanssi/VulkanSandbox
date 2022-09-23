@@ -29,6 +29,8 @@ public:
     return currentFrameIndex;
   }
 
+  int getSwapChainImagecount() const { return swapChain->imageCount(); };
+
   float getAspectRatio() const { return swapChain->extentAspectRatio(); };
   VkRenderPass swapChainRenderPass() const { return swapChain->renderPass; };
 
