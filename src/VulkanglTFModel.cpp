@@ -543,6 +543,7 @@ void Model::loadFromFile(std::string filename, Device *device, VkQueue transferQ
     }
     if (gltfModel.animations.size() > 0) {
       loadAnimations(gltfModel);
+      std::cerr << "animations" << '\n';
     }
     loadSkins(gltfModel);
 
@@ -634,8 +635,9 @@ void Model::drawNode(Node *node, VkCommandBuffer commandBuffer, VkPipelineLayout
                               static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
       // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
+      auto nodeMatrix = node->getMatrix();
       vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                         sizeof(glm::mat4), &node->translation);
+                         sizeof(glm::mat4), &nodeMatrix);
       if (primitive->hasIndices) {
         vkCmdDrawIndexed(commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
       } else {
@@ -676,7 +678,7 @@ void Model::updateAnimation(uint32_t index, float time) {
     }
 
     for (size_t i = 0; i < sampler.inputs.size() - 1; i++) {
-      if ((time >= sampler.inputs[i]) && (time <= sampler.inputs[i + 1])) {
+      if ((true) && (true)) {
         float u = std::max(0.0f, time - sampler.inputs[i]) / (sampler.inputs[i + 1] - sampler.inputs[i]);
         if (u <= 1.0f) {
           switch (channel.path) {

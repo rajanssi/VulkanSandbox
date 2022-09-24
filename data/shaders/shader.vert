@@ -36,11 +36,7 @@ void main()
 	vec4 locPos;
 	if (node.jointCount > 0.0) {
 		// Mesh is skinned
-		mat4 skinMat =
-			inWeight0.x * node.jointMatrix[int(inJoint0.x)] +
-			inWeight0.y * node.jointMatrix[int(inJoint0.y)] +
-			inWeight0.z * node.jointMatrix[int(inJoint0.z)] +
-			inWeight0.w * node.jointMatrix[int(inJoint0.w)];
+		mat4 skinMat = inWeight0.x * node.jointMatrix[int(inJoint0.x)] + inWeight0.y * node.jointMatrix[int(inJoint0.y)] + inWeight0.z * node.jointMatrix[int(inJoint0.z)] + inWeight0.w * node.jointMatrix[int(inJoint0.w)];
 
 		locPos = primitive.model * node.matrix * skinMat * vec4(inPos, 1.0);
 		outNormal = normalize(transpose(inverse(mat3(primitive.model * node.matrix * skinMat))) * inNormal);
@@ -58,3 +54,4 @@ void main()
 	outLightVec = lPos - pos.xyz;
 	outViewVec = -pos.xyz;
 }
+

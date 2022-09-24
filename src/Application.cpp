@@ -168,7 +168,7 @@ void Application::run() {
       renderSystem.renderModel(frameInfo, *model);
       renderer.endRenderPass(commandBuffer);
       renderer.submitFrame();
-      // model->updateAnimation(0, frameTime);
+      model->updateAnimation(0, frameTime);
     }
     glfwPollEvents();
   }
