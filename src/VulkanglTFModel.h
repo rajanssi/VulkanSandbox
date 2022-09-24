@@ -128,6 +128,8 @@ public:
     VkDeviceMemory memory;
   } indices;
 
+  float animationTimer = 0.0f;
+
   glm::mat4 aabb;
 
   std::vector<Node *> nodes;

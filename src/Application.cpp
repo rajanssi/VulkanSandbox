@@ -180,7 +180,7 @@ void Application::run() {
 }
 
 void Application::loadModel() {
-  std::string filename = "data/models/CesiumMan.gltf";
+  std::string filename = "data/models/animbox.gltf";
   model = std::make_unique<vkglTF::Model>(filename, &device, device.graphicsQueue);
   // model->loadFromFile(filename, &device, device.graphicsQueue, 1.0f);
 };

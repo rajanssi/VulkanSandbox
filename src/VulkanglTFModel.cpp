@@ -636,8 +636,7 @@ void Model::drawNode(Node *node, VkCommandBuffer commandBuffer, VkPipelineLayout
 
       // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
       auto nodeMatrix = node->getMatrix();
-      vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0,
-                         sizeof(glm::mat4), &nodeMatrix);
+      vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &nodeMatrix);
       if (primitive->hasIndices) {
         vkCmdDrawIndexed(commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
       } else {
@@ -671,6 +670,11 @@ void Model::updateAnimation(uint32_t index, float time) {
   Animation &animation = animations[index];
 
   bool updated = false;
+  animationTimer += time;
+  if (animationTimer > animations[index].end) {
+    animationTimer -= animations[index].end;
+  }
+
   for (auto &channel : animation.channels) {
     vkglTF::AnimationSampler &sampler = animation.samplers[channel.samplerIndex];
     if (sampler.inputs.size() > sampler.outputsVec4.size()) {
@@ -678,7 +682,7 @@ void Model::updateAnimation(uint32_t index, float time) {
     }
 
     for (size_t i = 0; i < sampler.inputs.size() - 1; i++) {
-      if ((true) && (true)) {
+      if ((animationTimer >= sampler.inputs[i]) && (animationTimer <= sampler.inputs[i + 1])) {
         float u = std::max(0.0f, time - sampler.inputs[i]) / (sampler.inputs[i + 1] - sampler.inputs[i]);
         if (u <= 1.0f) {
           switch (channel.path) {
