@@ -260,7 +260,7 @@ void Model::loadNode(vkglTF::Node *parent, const tinygltf::Node &node, uint32_t 
           vert.normal =
               glm::normalize(glm::vec3(bufferNormals ? glm::make_vec3(&bufferNormals[v * normByteStride]) : glm::vec3(0.0f)));
           vert.color =
-              bufferColorSet0 ? glm::make_vec4(&bufferColorSet0[v * color0ByteStride]) : glm::vec4(0.1f, 0.1f, 0.1f, 1.0f);
+              bufferColorSet0 ? glm::make_vec4(&bufferColorSet0[v * color0ByteStride]) : glm::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
           if (hasSkin) {
             switch (jointComponentType) {
