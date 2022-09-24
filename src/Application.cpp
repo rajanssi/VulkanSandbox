@@ -39,7 +39,11 @@ Application::Application() {
 
 }
 
-Application::~Application() {}
+Application::~Application() {
+  model->destroy(device());
+  vkDestroyDescriptorSetLayout(device(), modelDescriptorSetLayout, nullptr);
+  vkDestroyDescriptorPool(device(), modelDescriptorPool, nullptr);
+}
 
 void Application::setupNodeDescriptorSet(vkglTF::Node *node) {
   if (node->mesh) {
@@ -172,12 +176,11 @@ void Application::run() {
     }
     glfwPollEvents();
   }
-
   vkDeviceWaitIdle(device());
 }
 
 void Application::loadModel() {
-  std::string filename = "data/models/animbox.gltf";
+  std::string filename = "data/models/CesiumMan.gltf";
   model = std::make_unique<vkglTF::Model>(filename, &device, device.graphicsQueue);
   // model->loadFromFile(filename, &device, device.graphicsQueue, 1.0f);
 };
