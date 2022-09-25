@@ -84,7 +84,7 @@ void RenderSystem::createPipeline(VkRenderPass renderPass) {
       std::make_unique<Pipeline>(device, "data/shaders/shader.vert.spv", "data/shaders/shader.frag.spv", pipelineConfig);
 }
 
-void RenderSystem::renderModel(FrameInfo &frameInfo, vkglTF::Model &model) {
+void RenderSystem::renderModel(FrameInfo &frameInfo, Model &model) {
   pipeline->bind(frameInfo.commandBuffer);
 
   vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,

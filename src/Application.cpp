@@ -1,22 +1,15 @@
 #include "Application.h"
 
+#include "Buffer.h"
+#include "RenderSystem.h"
+
 #include <chrono>
 #include <iostream>
 #include <memory>
 #include <numeric>
 #include <vulkan/vulkan_core.h>
 
-#include "Buffer.h"
-#include "Camera.h"
-#include "Descriptors.h"
-#include "GLFW/glfw3.h"
-#include "RenderSystem.h"
-#include "VulkanglTFModel.h"
-
-#define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
+#include <GLFW/glfw3.h>
 
 namespace {
 bool firstMouse = true;
@@ -45,7 +38,7 @@ Application::~Application() {
   vkDestroyDescriptorPool(device(), modelDescriptorPool, nullptr);
 }
 
-void Application::setupNodeDescriptorSet(vkglTF::Node *node) {
+void Application::setupNodeDescriptorSet(Node *node) {
   if (node->mesh) {
     VkDescriptorSetAllocateInfo descriptorSetAllocInfo{};
     descriptorSetAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -172,7 +165,7 @@ void Application::run() {
       renderSystem.renderModel(frameInfo, *model);
       renderer.endRenderPass(commandBuffer);
       renderer.submitFrame();
-      model->updateAnimation(0, frameTime);
+      model->animator->updateAnimation(0, frameTime);
     }
     glfwPollEvents();
   }
@@ -181,7 +174,7 @@ void Application::run() {
 
 void Application::loadModel() {
   std::string filename = "data/models/animbox.gltf";
-  model = std::make_unique<vkglTF::Model>(filename, &device, device.graphicsQueue);
+  model = std::make_unique<Model>(filename, &device, device.graphicsQueue);
   // model->loadFromFile(filename, &device, device.graphicsQueue, 1.0f);
 };
 // void Application::loadModel() { model = Model::createglTFModel(device, "data/models/FlightHelmet/FlightHelmet.gltf"); }

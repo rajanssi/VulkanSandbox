@@ -1,15 +1,12 @@
 #pragma once
 
-#include <memory>
-#include <vector>
-
 #include "Camera.h"
 #include "Descriptors.h"
 #include "Device.h"
 #include "Model.h"
 #include "Renderer.h"
 #include "VulkanBuffer.h"
-#include "VulkanglTFModel.h"
+#include "Model.h"
 #include "Window.h"
 
 class Application {
@@ -42,16 +39,15 @@ private:
   std::unique_ptr<DescriptorPool> nodePool;
 
   // std::unique_ptr<Model> model;
-  std::unique_ptr<vkglTF::Model> model;
+  std::unique_ptr<Model> model;
 
   VkDescriptorPool modelDescriptorPool;
   VkDescriptorSetLayout modelDescriptorSetLayout;
 
-
   void loadModel();
   void createGlobalUBO();
   void setupDescriptors();
-  void setupNodeDescriptorSet(vkglTF::Node *node);
+  void setupNodeDescriptorSet(Node *node);
   void updateUniformBuffers();
 };
 

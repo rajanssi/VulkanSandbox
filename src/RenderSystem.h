@@ -8,7 +8,7 @@
 #include "FrameInfo.h"
 #include "Model.h"
 #include "Pipeline.h"
-#include "VulkanglTFModel.h"
+#include "Model.h"
 
 class RenderSystem {
 public:
@@ -20,7 +20,7 @@ public:
   RenderSystem(const RenderSystem &) = delete;
   RenderSystem &operator=(const RenderSystem &) = delete;
 
-  void renderModel(FrameInfo &frameInfo, vkglTF::Model &model);
+  void renderModel(FrameInfo &frameInfo, Model &model);
 
 private:
   // NOTE:

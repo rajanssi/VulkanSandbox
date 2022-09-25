@@ -5,7 +5,7 @@
 #include <iostream>
 #include <stdexcept>
 
-#include "VulkanglTFModel.h"
+#include "Model.h"
 
 Pipeline::Pipeline(Device &device, const std::string &vertFilepath, const std::string &fragFilepath,
                    const PipelineConfigInfo &configInfo)
@@ -64,8 +64,8 @@ void Pipeline::createGraphicsPipeline(const std::string &vertFilepath, const std
   shaderStages[1].pNext = nullptr;
   shaderStages[1].pSpecializationInfo = nullptr;
 
-  auto bindingDescriptions = vkglTF::Model::getBindingDescriptions();
-  auto attributeDescriptions = vkglTF::Model::getAttributeDescriptions();
+  auto bindingDescriptions = Model::getBindingDescriptions();
+  auto attributeDescriptions = Model::getAttributeDescriptions();
   VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
   vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
   vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
