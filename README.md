@@ -1,4 +1,4 @@
-My personal adventures with Vulkan.
+My personal learning adventures with Vulkan.
 
 Current goals with the project
 
