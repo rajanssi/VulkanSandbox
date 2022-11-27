@@ -1,0 +1,5 @@
+[requires]
+tinygltf/2.5.0
+
+[generators]
+cmake

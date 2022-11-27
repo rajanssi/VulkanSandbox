@@ -7,7 +7,8 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
-find_package(Vulkan REQUIRED)
+include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+conan_basic_setup()
 
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
@@ -17,23 +18,14 @@ add_subdirectory(external/glfw)
 SET(GLM_TEST_ENABLE OFF CACHE BOOL "GLM Build unit tests")
 include_directories(external/glm)
 
-set(TINYGLTF_HEADER_ONLY ON CACHE INTERNAL "" FORCE)
-set(TINYGLTF_INSTALL OFF CACHE INTERNAL "" FORCE)
-add_subdirectory(external/tinygltf)
+add_subdirectory(src)
 
-set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data/shaders)
-set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/data/shaders)
-set(GLSL_VALIDATOR "glslc")
-
-file(GLOB PROJECT_HEADERS src/*.h)
-file(GLOB PROJECT_SOURCES src/*.cpp)
 file(GLOB_RECURSE PROJECT_SHADERS
   data/shaders/*.vert
   data/shaders/*.frag)
-
-add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${PROJECT_HEADERS})
-
-target_link_libraries(${PROJECT_NAME} glfw ${GLFW_LIBRARIES} Vulkan::Vulkan tinygltf ${TINYGLTF_LIBRARIES})
+set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/data/shaders)
+set(SHADER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/data/shaders)
+set(GLSL_VALIDATOR "glslc")
 
 foreach(GLSL ${PROJECT_SHADERS})
  get_filename_component(FILE_NAME ${GLSL} NAME)
@@ -53,9 +45,9 @@ add_custom_target(
 
   add_dependencies(${PROJECT_NAME} Shaders)
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-COMMAND ${CMAKE_COMMAND} -E copy_directory
-      "${PROJECT_BINARY_DIR}/data/shaders"
-      "$<TARGET_FILE_DIR:${PROJECT_NAME}>/data/shaders"
-      )
+  #add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+  #COMMAND ${CMAKE_COMMAND} -E copy_directory
+  #"${PROJECT_BINARY_DIR}/data/shaders"
+  #    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/data/shaders"
+  #    )
 
