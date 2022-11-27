@@ -1,12 +1,11 @@
 #pragma once
 
 #include "Camera.h"
-#include "Descriptors.h"
-#include "Device.h"
 #include "Model.h"
-#include "Graphics/Renderer.h"
-#include "VulkanBuffer.h"
-#include "Model.h"
+#include "VulkanBackend/Descriptors.h"
+#include "VulkanBackend/Device.h"
+#include "VulkanBackend/Renderer.h"
+#include "VulkanBackend/VulkanBuffer.h"
 #include "Window.h"
 
 class Application {

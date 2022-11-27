@@ -8,19 +8,11 @@ set(PROJECT_SOURCES
   Animator.h
   Application.cpp
   Application.h
-  Buffer.cpp
-  Buffer.h
   Camera.cpp
   Camera.h
-  CMakeLists.txt
-  Descriptors.cpp
-  Descriptors.h
-  Device.cpp
-  Device.h
   FrameInfo.h
   gltf.cpp
   gltf.h
-  Graphics
   main.cpp
   Mesh.cpp
   Mesh.h
@@ -28,25 +20,33 @@ set(PROJECT_SOURCES
   Model.h
   Node.cpp
   Node.h
-  Pipeline.cpp
-  Pipeline.h
   Primitive.cpp
   Primitive.h
-  RenderSystem.cpp
-  RenderSystem.h
   Skin.h
-  SwapChain.cpp
-  SwapChain.h
-  VulkanBuffer.h
-  VulkanTexture.cpp
-  VulkanTexture.h
   Window.cpp
   Window.h
   )
 
+
+
 set(GRAPHICS_SOURCES
-  Graphics/Renderer.cpp
-  Graphics/Renderer.h
+  VulkanBackend/Buffer.cpp
+  VulkanBackend/Buffer.h
+  VulkanBackend/Descriptors.cpp
+  VulkanBackend/Descriptors.h
+  VulkanBackend/Device.cpp
+  VulkanBackend/Device.h
+  VulkanBackend/Pipeline.cpp
+  VulkanBackend/Pipeline.h
+  VulkanBackend/Renderer.cpp
+  VulkanBackend/Renderer.h
+  VulkanBackend/RenderSystem.cpp
+  VulkanBackend/RenderSystem.h
+  VulkanBackend/SwapChain.cpp
+  VulkanBackend/SwapChain.h
+  VulkanBackend/VulkanBuffer.h
+  VulkanBackend/VulkanTexture.cpp
+  VulkanBackend/VulkanTexture.h
   )
 
 add_executable(${PROJECT_NAME} ${PROJECT_SOURCES} ${GRAPHICS_SOURCES})
