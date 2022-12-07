@@ -7,17 +7,11 @@
 
 #include "Model.h"
 
-Pipeline::Pipeline(Device &device, const std::string &vertFilepath, const std::string &fragFilepath,
-                   const PipelineConfigInfo &configInfo)
-    : device{device} {
-  createGraphicsPipeline(vertFilepath, fragFilepath, configInfo);
+Pipeline::Pipeline(Device &device, const PipelineConfigInfo &configInfo) : device{device} {
+  createGraphicsPipeline(configInfo);
 }
 
-Pipeline::~Pipeline() {
-  vkDestroyShaderModule(device(), vertShaderModule, nullptr);
-  vkDestroyShaderModule(device(), fragShaderModule, nullptr);
-  vkDestroyPipeline(device(), graphicsPipeline, nullptr);
-}
+Pipeline::~Pipeline() { vkDestroyPipeline(device(), graphicsPipeline, nullptr); }
 
 std::vector<char> Pipeline::readFile(const std::string &filepath) {
   std::ifstream file{filepath, std::ios::ate | std::ios::binary};
@@ -36,14 +30,27 @@ std::vector<char> Pipeline::readFile(const std::string &filepath) {
   return buffer;
 }
 
-void Pipeline::createGraphicsPipeline(const std::string &vertFilepath, const std::string &fragFilepath,
-                                      const PipelineConfigInfo &configInfo) {
+void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
+  VkShaderModuleCreateInfo createInfo{};
+  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+  createInfo.codeSize = code.size();
+  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+
+  if (vkCreateShaderModule(device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create shader module");
+  }
+}
+
+void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo) {
   assert(configInfo.pipelineLayout != VK_NULL_HANDLE && "Cannot create graphics pipeline: no pipelineLayout provided in "
                                                         "configInfo");
   assert(configInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in configInfo");
 
-  auto vertCode = readFile(vertFilepath);
-  auto fragCode = readFile(fragFilepath);
+  auto vertCode = readFile("data/shaders/shader.vert.spv");
+  auto fragCode = readFile("data/shaders/shader.frag.spv");
+
+  VkShaderModule vertShaderModule;
+  VkShaderModule fragShaderModule;
 
   createShaderModule(vertCode, &vertShaderModule);
   createShaderModule(fragCode, &fragShaderModule);
@@ -96,17 +103,9 @@ void Pipeline::createGraphicsPipeline(const std::string &vertFilepath, const std
   if (vkCreateGraphicsPipelines(device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline");
   }
-}
 
-void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
-  VkShaderModuleCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = code.size();
-  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
-
-  if (vkCreateShaderModule(device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create shader module");
-  }
+  vkDestroyShaderModule(device(), vertShaderModule, nullptr);
+  vkDestroyShaderModule(device(), fragShaderModule, nullptr);
 }
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {

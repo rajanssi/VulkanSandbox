@@ -1,14 +1,15 @@
 #pragma once
 
-#include "Mesh.h"
-#include "Skin.h"
-
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 #include <cstdint>
 #include <string>
 #include <vector>
+
+#include "Material.h"
+#include "Mesh.h"
+#include "Skin.h"
 
 struct Node {
   Node *parent;
@@ -18,6 +19,7 @@ struct Node {
   std::string name;
   Mesh *mesh;
   Skin *skin;
+  Material *material;
   int32_t skinIndex = -1;
   glm::vec3 translation{};
   glm::vec3 scale{1.0f};

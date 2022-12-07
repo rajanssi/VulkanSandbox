@@ -1,15 +1,14 @@
 #include "Application.h"
 
-#include "VulkanBackend/Buffer.h"
-#include "VulkanBackend/RenderSystem.h"
-
 #include <chrono>
 #include <iostream>
 #include <memory>
 #include <numeric>
-#include <vulkan/vulkan_core.h>
 
 #include <GLFW/glfw3.h>
+#include <vulkan/vulkan_core.h>
+
+#include "VulkanBackend/Buffer.h"
 
 namespace {
 bool firstMouse = true;
@@ -29,7 +28,6 @@ Application::Application() {
                    .setMaxSets(SwapChain::MAX_FRAMES_IN_FLIGHT)
                    .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, SwapChain::MAX_FRAMES_IN_FLIGHT)
                    .build();
-
 }
 
 Application::~Application() {
@@ -66,33 +64,21 @@ void Application::setupDescriptors() {
   /*
           Descriptor Pool
   */
-  uint32_t imageSamplerCount = 0;
-  uint32_t materialCount = 0;
-  uint32_t meshCount = 0;
-
-  for (auto node : model->linearNodes) {
-    if (node->mesh) {
-      meshCount++;
-    }
-  }
-
-  std::cerr << meshCount << '\n';
-  std::cerr << renderer.getSwapChainImagecount() << '\n';
-
+  // HACK: Just set some amount of descriptors from this pool, this is a temp solution before
+  // pipeline manager is implemented
   std::vector<VkDescriptorPoolSize> poolSizes = {
-      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, (4 + meshCount) * renderer.getSwapChainImagecount()}};
+      {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000u * renderer.getSwapChainImagecount()}};
   VkDescriptorPoolCreateInfo descriptorPoolCI{};
   descriptorPoolCI.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
   descriptorPoolCI.poolSizeCount = 1;
   descriptorPoolCI.pPoolSizes = poolSizes.data();
-  descriptorPoolCI.maxSets = (4 +  meshCount) * renderer.getSwapChainImagecount();
+  descriptorPoolCI.maxSets = 1000 * renderer.getSwapChainImagecount();
 
   vkCreateDescriptorPool(device(), &descriptorPoolCI, nullptr, &modelDescriptorPool);
 
   /*
-          Descriptor sets
+          Descriptor set layout
   */
-
   // Model node (matrices)
   {
     std::vector<VkDescriptorSetLayoutBinding> setLayoutBindings = {
@@ -103,11 +89,6 @@ void Application::setupDescriptors() {
     descriptorSetLayoutCI.pBindings = setLayoutBindings.data();
     descriptorSetLayoutCI.bindingCount = static_cast<uint32_t>(setLayoutBindings.size());
     vkCreateDescriptorSetLayout(device(), &descriptorSetLayoutCI, nullptr, &modelDescriptorSetLayout);
-
-    // Per-Node descriptor set
-    for (auto &node : model->nodes) {
-      setupNodeDescriptorSet(node);
-    }
   }
 }
 
@@ -115,8 +96,10 @@ void Application::run() {
   glfwSetCursorPosCallback(window.getWindow(), mouseCallback);
   glfwSetInputMode(window.getWindow(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-
   setupDescriptors();
+  auto globalSetLayout = DescriptorSetLayout::Builder(device)
+                             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
+                             .build();
 
   std::vector<std::unique_ptr<Buffer>> uboBuffers(SwapChain::MAX_FRAMES_IN_FLIGHT);
   for (size_t i = 0; i < uboBuffers.size(); i++) {
@@ -125,18 +108,35 @@ void Application::run() {
     uboBuffers[i]->map();
   }
 
-  auto globalSetLayout = DescriptorSetLayout::Builder(device)
-                             .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT)
-                             .build();
+  loadModel();
+
+  // HACK: create temp pipeline
+  VkPushConstantRange pushConstantRange{};
+  pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+  pushConstantRange.offset = 0;
+  pushConstantRange.size = sizeof(glm::mat4);
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout->getDescriptorSetLayout(), modelDescriptorSetLayout};
+  VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+  pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+  pipelineLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
+  pipelineLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+  pipelineLayoutInfo.pushConstantRangeCount = 1;
+  pipelineLayoutInfo.pPushConstantRanges = &pushConstantRange;
+  if (vkCreatePipelineLayout(device(), &pipelineLayoutInfo, nullptr, &tempPipelineLayout_) != VK_SUCCESS) {
+    throw std::runtime_error("failed to create pipeline layout!");
+  }
+
+  model->setMaterials(tempPipelineLayout_, renderer.swapChainRenderPass());
 
   std::vector<VkDescriptorSet> globalDescriptorSets(SwapChain::MAX_FRAMES_IN_FLIGHT);
-
-  RenderSystem renderSystem{device, renderer.swapChainRenderPass(), globalSetLayout->getDescriptorSetLayout(),
-                            modelDescriptorSetLayout};
-
   for (size_t i = 0; i < globalDescriptorSets.size(); ++i) {
     auto bufferInfo = uboBuffers[i]->descriptorInfo();
     DescriptorWriter(*globalSetLayout, *globalPool).writeBuffer(0, &bufferInfo).build(globalDescriptorSets[i]);
+  }
+
+  // Per-Node descriptor set
+  for (auto &node : model->nodes) {
+    setupNodeDescriptorSet(node);
   }
 
   using namespace std::chrono;
@@ -162,7 +162,7 @@ void Application::run() {
 
       // render
       renderer.beginRenderPass(commandBuffer);
-      renderSystem.renderModel(frameInfo, *model);
+      model->draw(frameInfo, tempPipelineLayout_);
       renderer.endRenderPass(commandBuffer);
       renderer.submitFrame();
       model->animator->updateAnimation(0, frameTime);

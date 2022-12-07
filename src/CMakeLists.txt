@@ -14,6 +14,8 @@ set(PROJECT_SOURCES
   gltf.cpp
   gltf.h
   main.cpp
+  Material.cpp
+  Material.h
   Mesh.cpp
   Mesh.h
   Model.cpp
@@ -40,8 +42,6 @@ set(GRAPHICS_SOURCES
   VulkanBackend/Pipeline.h
   VulkanBackend/Renderer.cpp
   VulkanBackend/Renderer.h
-  VulkanBackend/RenderSystem.cpp
-  VulkanBackend/RenderSystem.h
   VulkanBackend/SwapChain.cpp
   VulkanBackend/SwapChain.h
   VulkanBackend/VulkanBuffer.h

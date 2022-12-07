@@ -27,27 +27,23 @@ private:
   Device device{window};
   Renderer renderer{window, device};
 
+  // HACK: all of these should be in appropriate locations
   struct UBOMatrices {
     glm::mat4 projection;
     glm::mat4 model;
     glm::mat4 view;
     glm::vec3 camPos;
   } shaderValues;
-
   std::unique_ptr<DescriptorPool> globalPool;
   std::unique_ptr<DescriptorPool> nodePool;
-
-  // std::unique_ptr<Model> model;
   std::unique_ptr<Model> model;
-
   VkDescriptorPool modelDescriptorPool;
   VkDescriptorSetLayout modelDescriptorSetLayout;
+  VkPipelineLayout tempPipelineLayout_;
 
   void loadModel();
-  void createGlobalUBO();
   void setupDescriptors();
   void setupNodeDescriptorSet(Node *node);
-  void updateUniformBuffers();
 };
 
 // TODO: Move this to a more appropriate place

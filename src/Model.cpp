@@ -1,6 +1,11 @@
 #include "Model.h"
+
 #include <memory>
+
+#include <stdexcept>
 #include <vulkan/vulkan_core.h>
+
+#include "Material.h"
 
 std::vector<VkVertexInputBindingDescription> Model::getBindingDescriptions() {
   std::vector<VkVertexInputBindingDescription> bindingDescriptions(1);
@@ -38,7 +43,6 @@ void Model::destroy(VkDevice device) {
   }
   nodes.resize(0);
   linearNodes.resize(0);
-
 };
 
 void Model::loadNode(Node *parent, const tinygltf::Node &node, uint32_t nodeIndex, const tinygltf::Model &model,
@@ -389,24 +393,32 @@ void Model::loadFromFile(std::string filename, Device *device, VkQueue transferQ
   delete[] loaderInfo.indexBuffer;
 }
 
+void Model::setMaterials(VkPipelineLayout pipelineLayout, VkRenderPass renderPass) {
+  material = new Material(device, pipelineLayout, renderPass);
+  for (auto& node : linearNodes) {
+    node->material = material;
+  }
+}
+
 void Model::drawNode(Node *node, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
   if (node->mesh) {
     // Render mesh primitives
+    //pipeline.bind(commandBuffer);
+    if (node->material == nullptr) {
+      throw std::runtime_error("node doesn't have material!");
+    }
+    node->material->pipeline_->bind(commandBuffer);
     for (Primitive *primitive : node->mesh->primitives) {
       const std::vector<VkDescriptorSet> descriptorsets = {
           node->mesh->uniformBuffer.descriptorSet,
       };
-      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1,
-                              static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
 
-      // TODO: glTF specs states that metallic roughness should be preferred, even if specular glosiness is present
+      // NOTE: Assume indexed drawing
       auto nodeMatrix = node->getMatrix();
       vkCmdPushConstants(commandBuffer, pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::mat4), &nodeMatrix);
-      if (primitive->hasIndices) {
-        vkCmdDrawIndexed(commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
-      } else {
-        vkCmdDraw(commandBuffer, primitive->vertexCount, 1, 0, 0);
-      }
+      vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 1,
+                              static_cast<uint32_t>(descriptorsets.size()), descriptorsets.data(), 0, NULL);
+      vkCmdDrawIndexed(commandBuffer, primitive->indexCount, 1, primitive->firstIndex, 0, 0);
     }
   };
   for (auto child : node->children) {
@@ -414,11 +426,13 @@ void Model::drawNode(Node *node, VkCommandBuffer commandBuffer, VkPipelineLayout
   }
 }
 
-void Model::draw(VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
+void Model::draw(FrameInfo &frameInfo, VkPipelineLayout pipelineLayout) {
+  vkCmdBindDescriptorSets(frameInfo.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+                          &frameInfo.globalDescriptorSet, 0, nullptr);
   const VkDeviceSize offsets[1] = {0};
-  vkCmdBindVertexBuffers(commandBuffer, 0, 1, &vertices.buffer, offsets);
-  vkCmdBindIndexBuffer(commandBuffer, indices.buffer, 0, VK_INDEX_TYPE_UINT32);
+  vkCmdBindVertexBuffers(frameInfo.commandBuffer, 0, 1, &vertices.buffer, offsets);
+  vkCmdBindIndexBuffer(frameInfo.commandBuffer, indices.buffer, 0, VK_INDEX_TYPE_UINT32);
   for (auto &node : nodes) {
-    drawNode(node, commandBuffer, pipelineLayout);
+    drawNode(node, frameInfo.commandBuffer, pipelineLayout);
   }
 }

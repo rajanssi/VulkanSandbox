@@ -2,7 +2,7 @@
 
 #include <cstring>
 
-// Node
+
 glm::mat4 Node::localMatrix() {
   return glm::translate(glm::mat4(1.0f), translation) * glm::mat4(rotation) * glm::scale(glm::mat4(1.0f), scale) * matrix;
 }
@@ -46,6 +46,9 @@ void Node::update() {
 Node::~Node() {
   if (mesh) {
     delete mesh;
+  }
+  if (material) {
+    delete material;
   }
   for (auto &child : children) {
     delete child;
