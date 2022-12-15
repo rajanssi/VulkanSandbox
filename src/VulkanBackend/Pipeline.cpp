@@ -6,29 +6,13 @@
 #include <stdexcept>
 
 #include "Model.h"
+#include "ResourceManager.h"
 
 Pipeline::Pipeline(Device &device, const PipelineConfigInfo &configInfo) : device{device} {
   createGraphicsPipeline(configInfo);
 }
 
 Pipeline::~Pipeline() { vkDestroyPipeline(device(), graphicsPipeline, nullptr); }
-
-std::vector<char> Pipeline::readFile(const std::string &filepath) {
-  std::ifstream file{filepath, std::ios::ate | std::ios::binary};
-
-  if (!file.is_open()) {
-    throw std::runtime_error("failed to open file: " + filepath);
-  }
-
-  size_t fileSize = static_cast<size_t>(file.tellg());
-  std::vector<char> buffer(fileSize);
-
-  file.seekg(0);
-  file.read(buffer.data(), fileSize);
-
-  file.close();
-  return buffer;
-}
 
 void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
   VkShaderModuleCreateInfo createInfo{};
@@ -46,14 +30,17 @@ void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo) {
                                                         "configInfo");
   assert(configInfo.renderPass != VK_NULL_HANDLE && "Cannot create graphics pipeline: no renderPass provided in configInfo");
 
-  auto vertCode = readFile("data/shaders/shader.vert.spv");
-  auto fragCode = readFile("data/shaders/shader.frag.spv");
-
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
 
-  createShaderModule(vertCode, &vertShaderModule);
-  createShaderModule(fragCode, &fragShaderModule);
+  ResourceManager resManager{device};
+  resManager.loadResourceFromFile<ShaderResource>(configInfo.fragPath);
+  resManager.loadResourceFromFile<ShaderResource>(configInfo.vertPath);
+  auto vertModule = resManager.getResource<ShaderResource *>(configInfo.vertPath);
+  auto fragModule = resManager.getResource<ShaderResource *>(configInfo.fragPath);
+
+  createShaderModule(vertModule->getData(), &vertShaderModule);
+  createShaderModule(fragModule->getData(), &fragShaderModule);
 
   VkPipelineShaderStageCreateInfo shaderStages[2];
   shaderStages[0].sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -179,4 +166,7 @@ void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo &configInfo) {
   configInfo.dynamicStateInfo.pDynamicStates = configInfo.dynamicStateEnables.data();
   configInfo.dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(configInfo.dynamicStateEnables.size());
   configInfo.dynamicStateInfo.flags = 0;
+
+  configInfo.fragPath = "data/shaders/shader.frag.spv";
+  configInfo.vertPath = "data/shaders/shader.vert.spv";
 }

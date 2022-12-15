@@ -22,6 +22,8 @@ struct PipelineConfigInfo {
   VkPipelineLayout pipelineLayout = nullptr;
   VkRenderPass renderPass = nullptr;
   uint32_t subpass = 0;
+  std::string fragPath;
+  std::string vertPath;
 };
 
 class Pipeline {

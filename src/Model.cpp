@@ -403,7 +403,6 @@ void Model::setMaterials(VkPipelineLayout pipelineLayout, VkRenderPass renderPas
 void Model::drawNode(Node *node, VkCommandBuffer commandBuffer, VkPipelineLayout pipelineLayout) {
   if (node->mesh) {
     // Render mesh primitives
-    //pipeline.bind(commandBuffer);
     if (node->material == nullptr) {
       throw std::runtime_error("node doesn't have material!");
     }

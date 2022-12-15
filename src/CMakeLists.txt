@@ -24,6 +24,10 @@ set(PROJECT_SOURCES
   Node.h
   Primitive.cpp
   Primitive.h
+  ResourceManager.cpp
+  ResourceManager.h
+  Resources.cpp
+  Resources.h
   Skin.h
   Window.cpp
   Window.h
