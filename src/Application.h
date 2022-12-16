@@ -2,11 +2,12 @@
 
 #include "Camera.h"
 #include "Model.h"
+#include "ResourceManager.h"
+#include "Window.h"
 #include "VulkanBackend/Descriptors.h"
 #include "VulkanBackend/Device.h"
 #include "VulkanBackend/Renderer.h"
 #include "VulkanBackend/VulkanBuffer.h"
-#include "Window.h"
 
 class Application {
 public:
@@ -20,12 +21,11 @@ public:
   Application &operator=(const Application &) = delete;
 
   void run();
-
 private:
   // NOTE: Order is important, since it determines destruction order (think stack)
-  Window window{WIDHT, HEIGHT, "Vulkan Title"};
-  Device device{window};
-  Renderer renderer{window, device};
+  Window window_{WIDHT, HEIGHT, "Vulkan Title"};
+  Device device_{window_};
+  Renderer renderer_{window_, device_};
 
   // HACK: all of these should be in appropriate locations
   struct UBOMatrices {
@@ -33,12 +33,14 @@ private:
     glm::mat4 model;
     glm::mat4 view;
     glm::vec3 camPos;
-  } shaderValues;
-  std::unique_ptr<DescriptorPool> globalPool;
-  std::unique_ptr<DescriptorPool> nodePool;
-  std::unique_ptr<Model> model;
-  VkDescriptorPool modelDescriptorPool;
-  VkDescriptorSetLayout modelDescriptorSetLayout;
+  } shaderValues_;
+
+  std::unique_ptr<DescriptorPool> globalPool_;
+  std::unique_ptr<DescriptorPool> nodePool_;
+  std::unique_ptr<Model> model_;
+
+  VkDescriptorPool modelDescriptorPool_;
+  VkDescriptorSetLayout modelDescriptorSetLayout_;
   VkPipelineLayout tempPipelineLayout_;
 
   void loadModel();
@@ -46,5 +48,5 @@ private:
   void setupNodeDescriptorSet(Node *node);
 };
 
-// TODO: Move this to a more appropriate place
+// HACK: Move this to a more appropriate place
 void mouseCallback(GLFWwindow *window, double xposIn, double yposIn);

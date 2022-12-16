@@ -1,5 +1,7 @@
 #include "ResourceManager.h"
 
+std::unordered_map<std::string, std::shared_ptr<Resource>> ResourceManager::resourceMap_;
+
 /*
 void ResourceManager::loadResourceFromFile(ResourceType resType, std::string &path) {
   switch (resType) {

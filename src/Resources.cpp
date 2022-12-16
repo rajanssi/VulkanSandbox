@@ -1,7 +1,12 @@
 #include "Resources.h"
 
 #include <fstream>
+#include <iostream>
 #include <vector>
+
+void MeshResource::loadResource(const std::string &path) {
+
+}
 
 std::vector<char> ShaderResource::readFile(const std::string &path) {
   std::ifstream file{path, std::ios::ate | std::ios::binary};
@@ -22,17 +27,9 @@ std::vector<char> ShaderResource::readFile(const std::string &path) {
 
 void ShaderResource::loadResource(const std::string &path) { code_ = readFile(path); }
 
-void ShaderResource::createShaderModule(Device& device, const std::vector<char> &code, VkShaderModule *shaderModule) {
-  VkShaderModuleCreateInfo createInfo{};
-  createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-  createInfo.codeSize = code.size();
-  createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
+const std::vector<char> &ShaderResource::getData() { return code_; }
 
-  if (vkCreateShaderModule(device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
-    throw std::runtime_error("failed to create shader module");
-  }
-}
+void TextureResource::loadResource(const std::string &path) {
+  std::cout << "unimplemented!\n";
 
-const std::vector<char>& ShaderResource::getData() {
-  return code_;
 }

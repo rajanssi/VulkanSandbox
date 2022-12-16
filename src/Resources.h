@@ -18,14 +18,34 @@ public:
 private:
 };
 
+class MaterialResource : public Resource {
+public:
+  virtual void loadResource(const std::string &path) override;
+
+private:
+  // TODO: material values
+};
+
+class MeshResource : public Resource {
+public:
+  virtual void loadResource(const std::string &path) override;
+
+private:
+};
+
 class ShaderResource : public Resource {
 public:
   virtual void loadResource(const std::string &path) override;
   const std::vector<char> &getData();
+
 private:
   std::vector<char> code_;
-
   std::vector<char> readFile(const std::string &path);
-  void createShaderModule(Device& device, const std::vector<char> &code, VkShaderModule *shaderModule);
 };
 
+class TextureResource : public Resource {
+public:
+  virtual void loadResource(const std::string &path) override;
+
+private:
+};

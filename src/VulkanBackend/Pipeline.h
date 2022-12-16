@@ -35,10 +35,9 @@ public:
 
   void bind(VkCommandBuffer commandBuffer);
   static void defaultPipelineConfigInfo(PipelineConfigInfo &configInfo);
-  static std::vector<char> readFile(const std::string &filepath);
 private:
-  Device &device;
-  VkPipeline graphicsPipeline;
+  Device &device_;
+  VkPipeline graphicsPipeline_;
 
   void createGraphicsPipeline(const PipelineConfigInfo &configInfo);
   void createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule);

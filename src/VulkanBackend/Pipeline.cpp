@@ -8,11 +8,11 @@
 #include "Model.h"
 #include "ResourceManager.h"
 
-Pipeline::Pipeline(Device &device, const PipelineConfigInfo &configInfo) : device{device} {
+Pipeline::Pipeline(Device &device, const PipelineConfigInfo &configInfo) : device_{device} {
   createGraphicsPipeline(configInfo);
 }
 
-Pipeline::~Pipeline() { vkDestroyPipeline(device(), graphicsPipeline, nullptr); }
+Pipeline::~Pipeline() { vkDestroyPipeline(device_(), graphicsPipeline_, nullptr); }
 
 void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule *shaderModule) {
   VkShaderModuleCreateInfo createInfo{};
@@ -20,7 +20,7 @@ void Pipeline::createShaderModule(const std::vector<char> &code, VkShaderModule 
   createInfo.codeSize = code.size();
   createInfo.pCode = reinterpret_cast<const uint32_t *>(code.data());
 
-  if (vkCreateShaderModule(device(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
+  if (vkCreateShaderModule(device_(), &createInfo, nullptr, shaderModule) != VK_SUCCESS) {
     throw std::runtime_error("failed to create shader module");
   }
 }
@@ -33,11 +33,8 @@ void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo) {
   VkShaderModule vertShaderModule;
   VkShaderModule fragShaderModule;
 
-  ResourceManager resManager{device};
-  resManager.loadResourceFromFile<ShaderResource>(configInfo.fragPath);
-  resManager.loadResourceFromFile<ShaderResource>(configInfo.vertPath);
-  auto vertModule = resManager.getResource<ShaderResource *>(configInfo.vertPath);
-  auto fragModule = resManager.getResource<ShaderResource *>(configInfo.fragPath);
+  auto vertModule = ResourceManager::getResource<ShaderResource *>(configInfo.vertPath);
+  auto fragModule = ResourceManager::getResource<ShaderResource *>(configInfo.fragPath);
 
   createShaderModule(vertModule->getData(), &vertShaderModule);
   createShaderModule(fragModule->getData(), &fragShaderModule);
@@ -87,16 +84,16 @@ void Pipeline::createGraphicsPipeline(const PipelineConfigInfo &configInfo) {
   pipelineInfo.basePipelineIndex = -1;
   pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
-  if (vkCreateGraphicsPipelines(device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+  if (vkCreateGraphicsPipelines(device_(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline_) != VK_SUCCESS) {
     throw std::runtime_error("failed to create graphics pipeline");
   }
 
-  vkDestroyShaderModule(device(), vertShaderModule, nullptr);
-  vkDestroyShaderModule(device(), fragShaderModule, nullptr);
+  vkDestroyShaderModule(device_(), vertShaderModule, nullptr);
+  vkDestroyShaderModule(device_(), fragShaderModule, nullptr);
 }
 
 void Pipeline::bind(VkCommandBuffer commandBuffer) {
-  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+  vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline_);
 }
 
 void Pipeline::defaultPipelineConfigInfo(PipelineConfigInfo &configInfo) {
